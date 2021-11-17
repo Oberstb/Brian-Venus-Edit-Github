@@ -126,7 +126,7 @@ colderror = idx * error * 5
 
 
 
-plt.figure(1)
+plt.figure(3)
 plt.plot(dfapp.index,dfapp, label = 'average')
 plt.plot(Vmeasdf.index, Vmeasdf.loc[:,"NTCminR"], label = 'NTCminR')
 plt.plot(Vmeasdf.index, Vmeasdf.loc[:,"NTCmaxR"], label = 'NTCmaxR')

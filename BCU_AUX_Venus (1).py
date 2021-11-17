@@ -44,6 +44,7 @@ Vmeasdf['Ave'] = Vmeasdf.mean(axis=1)
 #only look at temperatures from -20 to 103C
 
 def cost(x0):
+    global dfapp, lookuptable, errormin, error, errormax
     tstart = -20
     tend = 103
     yinit=x0[:int(len(x0)/2)]
@@ -87,7 +88,7 @@ def cost(x0):
 result = spo.minimize(cost,x0, method = 'Nelder-Mead')
 
 #Need to have a function to plot the results
-def eval_plot(x0, legendlabel, legendregion):
+def eval_plot(x0, legendlabel, legendregion, t, test):
     
     tstart = -20
     tend = 103
@@ -105,8 +106,8 @@ def eval_plot(x0, legendlabel, legendregion):
     #measured - actual error
     error = lutTemp - dfapp.index   
     
-    plt.figure()
-    plt.plot(dfapp.index,error, label = legendlabel)
+    plt.figure(t)
+    plt.plot(dfapp.index, error, label = legendlabel)
     plt.xlabel('Actual Temperature (C)')
     plt.ylabel('Temperature Error (Measured - Actual)')
     plt.legend(loc=legendregion, ncol=1, shadow=True, fancybox=True)
@@ -116,6 +117,21 @@ def eval_plot(x0, legendlabel, legendregion):
     
     return RMS
 
-eval_plot(x0,'original from AVL','lower right')
+eval_plot(x0,'original from AVL','lower right',1, error)
 
-eval_plot(result.x,'optimized', 'lower right')
+eval_plot(result.x,'optimized', 'lower right',1, error)
+
+#eval_plot(errormin,'optimized', 'lower right',1, errormin)
+
+#eval_plot(errormin,'optimized', 'lower right',1, errormax)
+
+
+plt.figure(3)
+plt.plot(dfapp.index,dfapp, label = 'average')
+plt.plot(Vmeasdf.index, Vmeasdf.loc[:,"NTCminR"], label = 'NTCminR')
+plt.plot(Vmeasdf.index, Vmeasdf.loc[:,"NTCmaxR"], label = 'NTCmaxR')
+#plt.plot(Vmeasdf.index, lookuptable, label = 'extrapolated lookup table')
+plt.xlabel('Actual Temperature (C)')
+plt.ylabel('Temperature Error (Measured - Actual)')
+plt.legend(loc='upper right', ncol=1, shadow=True, fancybox=True)
+
