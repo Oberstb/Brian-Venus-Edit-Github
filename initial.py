@@ -40,6 +40,19 @@ Vmeasdf['Ave'] = Vmeasdf.mean(axis=1)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 tstart = -30
 tend = 105
 yinit=x0[:int(len(x0)/2)]
@@ -73,9 +86,44 @@ idx = (error<0) & (dfapp.index.values>55) ## for error less than 0 in index valu
 hoterror = idx * error * 5
 idx = (error>0) & (dfapp.index.values<0) ## for index values less than 26 greater than 0 
 colderror = idx * error * 5
-interpolatestart = -40    # nplinspace starting point 
-interpolateend = 150      # nplinspace = endpoint 
-interpolatelength = interpolateend - interpolatestart + 1    # np linspace length between end and start 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 plt.figure(1)
