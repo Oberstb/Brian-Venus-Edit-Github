@@ -5,12 +5,12 @@ Created on Mon Nov 15 13:09:44 2021
 @author: venusb
 """
 
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d 
 import scipy.optimize as spo
+import initial 
 
 
 
@@ -117,21 +117,19 @@ def eval_plot(x0, legendlabel, legendregion, t, test):
     
     return RMS
 
-eval_plot(x0,'original from AVL','lower right',1, error)
+initial.initialplotfunction(x0, 'initial lookup table', 'Original')
+##eval_plot(x0,'original from AVL','lower right',3, error)
 
-eval_plot(result.x,'optimized', 'lower right',1, error)
+
+
+#eval_plot(result.x,'optimized', 'lower right',3, error)  ## result.x is optimized lookup table
+
+
+initial.initialplotfunction(result.x,'optimized lookup table','Optimized')
 
 #eval_plot(errormin,'optimized', 'lower right',1, errormin)
 
 #eval_plot(errormin,'optimized', 'lower right',1, errormax)
 
 
-plt.figure(3)
-plt.plot(dfapp.index,dfapp, label = 'average')
-plt.plot(Vmeasdf.index, Vmeasdf.loc[:,"NTCminR"], label = 'NTCminR')
-plt.plot(Vmeasdf.index, Vmeasdf.loc[:,"NTCmaxR"], label = 'NTCmaxR')
-#plt.plot(Vmeasdf.index, lookuptable, label = 'extrapolated lookup table')
-plt.xlabel('Actual Temperature (C)')
-plt.ylabel('Temperature Error (Measured - Actual)')
-plt.legend(loc='upper right', ncol=1, shadow=True, fancybox=True)
 
