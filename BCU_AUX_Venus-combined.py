@@ -13,7 +13,7 @@ import scipy.optimize as spo
 
 
 
-
+## this has header files
 cols = [0,1,2] ## 0 is temperatures 1 is max resistance 2 is min resistance 3 is voutlookuptable
 df = pd.read_excel('erroranalysis.xlsx',sheet_name ="BCU_Aux_Copy",usecols=cols, header = 0,index_col=0) #excel data is dict 
 
@@ -76,7 +76,7 @@ def cost(x0):
     return RMS
 
 
-def initialplotfunction(x0,label1,label2):
+def plotfunction(x0,label1,label2):
 
     
     
@@ -98,6 +98,7 @@ def initialplotfunction(x0,label1,label2):
     dfappmax = Vmeasdf['NTCmaxR'].loc[tstart:tend]
     dfappmin = Vmeasdf['NTCminR'].loc[tstart:tend]
     
+    ##extrapolate lookup table as function of x,y and y,x
     lut = interp1d(xinit, yinit, fill_value = "extrapolate") #input voltage output temperature
     lutxy = interp1d(yinit, xinit, fill_value = "extrapolate") #input voltage output temperature
     
@@ -139,9 +140,9 @@ def initialplotfunction(x0,label1,label2):
 result = spo.minimize(cost,x0, method = 'Nelder-Mead')
 
 
-initialplotfunction(x0, 'initial lookup table', 'Original')
+plotfunction(x0, 'initial lookup table', 'Original')
 
-initialplotfunction(result.x,'optimized lookup table','Optimized')
+plotfunction(result.x,'optimized lookup table','Optimized')
 
 
 
