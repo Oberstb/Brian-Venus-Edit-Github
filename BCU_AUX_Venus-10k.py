@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Nov 15 13:09:44 2021
+
+@author: venusb
+"""
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -16,7 +23,7 @@ x0 = [-40, 0, 20, 70, 110, 150, 4.9688630104064941, 4.6877126693725586, 4.252378
 
 
 global Rup, Vsupply, tol
-Rup = 2200
+Rup = 10000
 Vsupply = 5
 
 tol = 1.01 #1% tolerance on voltage supply rail and pull up resistor
@@ -128,12 +135,10 @@ def plotfunction(x0,label1,label2):
     plt.plot(dfapp.index,errormax, label = 'lookup table error vs error max')
     plt.xlabel('Actual Temperature (C)')
     plt.ylabel('Temperature Error (lookuptable - Actual)')
-    plt.legend(loc='lower right', ncol=1, shadow=True, fancybox=True)
+    plt.legend(loc='upper left', ncol=1, shadow=True, fancybox=True)
 
 result = spo.minimize(cost,x0, method = 'Nelder-Mead')
 
-
-plotfunction(x0, 'initial lookup table', 'Original')
 
 plotfunction(result.x,'optimized lookup table','Optimized')
 

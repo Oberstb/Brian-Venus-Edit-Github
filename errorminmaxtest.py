@@ -10,13 +10,11 @@ import scipy.optimize as spo
 cols = [0,1,2] ## 0 is temperatures 1 is max resistance 2 is min resistance 3 is voutlookuptable
 df = pd.read_excel('erroranalysis.xlsx',sheet_name ="BCU_Aux_Copy",usecols=cols, header = 0,index_col=0) #excel data is dict 
 
-
 #Current lookup table will be used as initial guess for optimization
-x0 = [-40, 0, 20, 70, 110, 150, 4.9688630104064941, 4.6877126693725586, 4.2523789405822754, 2.2073507308959961, 0.9325964450836182, 0.3815633654594421 ]
-
+x0 = [-20, -14,  0.00402452, 23.0419, 49.543, 76.1501, 87.5903, 96, 103, 4.26, 4.08, 3.85264, 2.62465, 1.26574, 0.616133, 0.478543, .331, 0.2669 ]
 
 global Rup, Vsupply, tol
-Rup = 2200
+Rup = 18000
 Vsupply = 5
 
 tol = 1.01 #1% tolerance on voltage supply rail and pull up resistor
@@ -54,24 +52,17 @@ def cost(x0):
     lutTemp = lut(dfapp)
     #measured - actual error
     error = lutTemp - dfapp.index
-    
-    #weight the error so that negative errors at hot temperatures, and postive errors at cold temperatures are worse  
-    idx = (error<0) & (dfapp.index.values>55)
-    hoterror = idx * error * 5
-    idx = (error>0) & (dfapp.index.values<0)
-    colderror = idx * error * 5
-    
-    newerror = error + hoterror + colderror
+
     
     #return a single value for RMS error
-    RMS = np.sqrt(np.average(newerror**2))
+    RMS = np.sqrt(np.average(error**2))
     
     return RMS
 
 
 def plotfunction(x0,label1,label2):
 
-    
+    global lutTemp, lookuptable, lutTempmin, lutTempmax, errormax, errormin, error, dfapp, dfappmax, dfappmin, lut
     
     #Determine the min and max expected voltage given tolerances of pull up and supply voltage
     maxVmeas = (Vsupply*tol)*(df['NTCmaxR']/(df['NTCmaxR']+Rup/tol)) ## correct
@@ -96,7 +87,7 @@ def plotfunction(x0,label1,label2):
     lutxy = interp1d(yinit, xinit, fill_value = "extrapolate") #input voltage output temperature
     
     Vmeasdf.index
-    lookuptable = lutxy(Vmeasdf.index) ## should be -40 to 140
+    lookuptable = lutxy(dfapp.index) ## should be -40 to 140
     
     
     #Resulting temperature using the lookup tables
@@ -116,7 +107,7 @@ def plotfunction(x0,label1,label2):
     plt.plot(Vmeasdf.index, Vmeasdf.loc[:,"NTCmaxR"], label = 'NTCmaxR')
     plt.plot(dfapp.index,dfapp, label = 'average')
     plt.plot(Vmeasdf.index, Vmeasdf.loc[:,"NTCminR"], label = 'NTCminR')
-    plt.plot(Vmeasdf.index, lookuptable, label = 'extrapolated lookup table')
+    plt.plot(dfapp.index, lookuptable, label = 'extrapolated lookup table')
     plt.xlabel('Actual Temperature (C)')
     plt.ylabel('Temperature Error (Measured - Actual)')
     plt.legend(loc='upper right', ncol=1, shadow=True, fancybox=True)
@@ -126,17 +117,19 @@ def plotfunction(x0,label1,label2):
     plt.plot(dfapp.index,errormin, label = 'lookup table error vs error min')
     plt.plot(dfapp.index,error, label = 'lookup table error vs error ave')
     plt.plot(dfapp.index,errormax, label = 'lookup table error vs error max')
+    plt.plot(dfapp.index,errormax, label = 'max vs min')
     plt.xlabel('Actual Temperature (C)')
     plt.ylabel('Temperature Error (lookuptable - Actual)')
     plt.legend(loc='lower right', ncol=1, shadow=True, fancybox=True)
 
+
 result = spo.minimize(cost,x0, method = 'Nelder-Mead')
-
-
-plotfunction(x0, 'initial lookup table', 'Original')
 
 plotfunction(result.x,'optimized lookup table','Optimized')
 
+lut2 = interp1d(dfappmax, dfappmax.index , fill_value = "extrapolate") #input voltage output temperature
 
-
-
+test = dfappmax - (dfappmax - dfappmin)
+lutTemptest = lut2(test)
+plt.figure('Optimized')
+plt.plot(dfapp.index,dfapp.index-lutTemptest, label = 'max vs min')
