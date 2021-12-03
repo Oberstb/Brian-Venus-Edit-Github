@@ -8,13 +8,15 @@ import scipy.optimize as spo
 
 ## this has header files
 cols = [0,1,2] ## 0 is temperatures 1 is max resistance 2 is min resistance 3 is voutlookuptable
-df = pd.read_excel('erroranalysis.xlsx',sheet_name ="BCU_Aux_Copy",usecols=cols, header = 0,index_col=0) #excel data is dict 
+df = pd.read_excel('erroranalysis.xlsx',sheet_name ="BCU_I_MISC_copy",usecols=cols, header = 0,index_col=0) #excel data is dict 
+
 
 #Current lookup table will be used as initial guess for optimization
-x0 = [-20, -14,   -2, 23.0419, 49.543, 76.1501, 87.5903, 96, 103, 4.26, 4.08,  3.6264, 2.62465, 1.26574, 0.616133, 0.478543, .331, 0.2669 ]
+x0 = [-40, -10, 20, 60, 100, 140, 4.9427528381347656, 4.7543163299560547, 4.2303566932678223,  2.8926117420196533, 1.5341155529022217, 0.7386397719383240]
+
 
 global Rup, Vsupply, tol
-Rup = 18000
+Rup = 2200
 Vsupply = 5
 
 tol = 1.01 #1% tolerance on voltage supply rail and pull up resistor
@@ -38,7 +40,7 @@ tend = 103
 #only look at temperatures from -20 to 103C
 
 def cost(x0):
-    global error, dfapp
+
     yinit=x0[:int(len(x0)/2)]
     xinit=x0[int(len(x0)/2):] #make the x voltage, so that we are comparing temperatures for error
     
@@ -52,17 +54,24 @@ def cost(x0):
     lutTemp = lut(dfapp)
     #measured - actual error
     error = lutTemp - dfapp.index
-
+    
+    #weight the error so that negative errors at hot temperatures, and postive errors at cold temperatures are worse  
+    idx = (error<0) & (dfapp.index.values>55)
+    hoterror = idx * error * 5
+    idx = (error>0) & (dfapp.index.values<0)
+    colderror = idx * error * 5
+    
+    newerror = error + hoterror + colderror
     
     #return a single value for RMS error
-    RMS = np.sqrt(np.average(error**2))
+    RMS = np.sqrt(np.average(newerror**2))
     
     return RMS
 
 
 def plotfunction(x0,label1,label2):
 
-    global lutTemp, lookuptable, lutTempmin, lutTempmax, errormax, errormin, error, dfapp, lutTempy, lutxy, lut
+    
     
     #Determine the min and max expected voltage given tolerances of pull up and supply voltage
     maxVmeas = (Vsupply*tol)*(df['NTCmaxR']/(df['NTCmaxR']+Rup/tol)) ## correct
@@ -74,8 +83,8 @@ def plotfunction(x0,label1,label2):
     Vmeasdf = Vmeasdf.join(maxVmeas)
     Vmeasdf['Ave'] = Vmeasdf.mean(axis=1)
     
-    yinit=result.x[:int(len(x0)/2)]
-    xinit=result.x[int(len(x0)/2):] #make the x voltage, so that we are comparing temperatures for error
+    yinit=x0[:int(len(x0)/2)]
+    xinit=x0[int(len(x0)/2):] #make the x voltage, so that we are comparing temperatures for error
     
     #narrow down the dataframe being used for temperatures
     dfapp = Vmeasdf['Ave'].loc[tstart:tend]
@@ -84,9 +93,10 @@ def plotfunction(x0,label1,label2):
     
     ##extrapolate lookup table as function of x,y and y,x
     lut = interp1d(xinit, yinit, fill_value = "extrapolate") #input voltage output temperature
-    lutxy = interp1d(yinit, xinit, fill_value = "extrapolate") #input temperature output voltage
+    lutxy = interp1d(yinit, xinit, fill_value = "extrapolate") #input voltage output temperature
     
-    lookuptable = lutxy(dfapp.index) ## should be -40 to 140
+    Vmeasdf.index
+    lookuptable = lutxy(Vmeasdf.index) ## should be -40 to 140
     
     
     #Resulting temperature using the lookup tables
@@ -106,7 +116,7 @@ def plotfunction(x0,label1,label2):
     plt.plot(Vmeasdf.index, Vmeasdf.loc[:,"NTCmaxR"], label = 'NTCmaxR')
     plt.plot(dfapp.index,dfapp, label = 'average')
     plt.plot(Vmeasdf.index, Vmeasdf.loc[:,"NTCminR"], label = 'NTCminR')
-    plt.plot(dfapp.index, lookuptable, label = 'extrapolated lookup table')
+    plt.plot(Vmeasdf.index, lookuptable, label = 'extrapolated lookup table')
     plt.xlabel('Actual Temperature (C)')
     plt.ylabel('Temperature Error (Measured - Actual)')
     plt.legend(loc='upper right', ncol=1, shadow=True, fancybox=True)
@@ -122,6 +132,8 @@ def plotfunction(x0,label1,label2):
 
 result = spo.minimize(cost,x0, method = 'Nelder-Mead')
 
+
+plotfunction(x0, 'initial lookup table', 'Original')
 
 plotfunction(result.x,'optimized lookup table','Optimized')
 
